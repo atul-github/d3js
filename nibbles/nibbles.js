@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>Simple Snake game in D3js</title>
-    <script src="d3.v3.min.js" ></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
 </head>
 <body>
 
