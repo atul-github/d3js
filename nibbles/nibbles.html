@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -149,7 +149,16 @@
                 ;
             }
 
-            this.SetNewLocation = function (maxX, maxY) {
+            this.SetNewLocation = function () {
+
+                var r = Math.random();
+                var maxHeight = thisObj.svg.attr('height');
+                thisObj.posY = r * parseInt(maxHeight);
+                
+                var r1 = Math.random();
+                var maxWidth = thisObj.svg.attr('width');
+
+                thisObj.posX = r1 * parseInt(maxWidth);
             }
 
             this.GetPrizeLocation = function () {
@@ -181,9 +190,10 @@
             ;
 
         nibbles.push(new Nibble(svg, 10, 10, 'n1', 'red'));
-        //nibbles.push(new Nibble(svg, 10, 10, 'n2', 'yellow'));
+        //nibbles.push(new Nibble(svg, 10, 34, 'n2', 'yellow'));
 
         prize = new Prize(svg);
+        prize.SetNewLocation();
         prize.Draw();
 
         for (var i = 0; i < nibbles.length; ++i) {
@@ -230,6 +240,10 @@
                     var r = nibbles[i].Move();
                     if (r == 'IATE') {
                         nibbles[i].SetSkip(5);
+                        prize.SetNewLocation();
+                        nibbles[i].SetPrizeLocation(prize.GetPrizeLocation());
+                        prize.Draw();
+                        
                     }
                 }
             }, 100);
