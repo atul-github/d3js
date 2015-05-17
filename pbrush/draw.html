@@ -1,0 +1,314 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+
+<script>
+    var gCurrentSelection = 'line';
+    var gContainerId;
+    var gCanvasId;
+    var gTopGroupId;
+    var gLineParams = {};
+    var gFreeHandParams = {};
+    var gCircleParams = {};
+
+    var gLines = [];
+    var gFreeHand = [];
+    var gCircles = [];
+    
+
+    function StartAction(evt) {
+        if (gCurrentSelection == 'line') {
+            gLineParams.StartParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+        }
+        else if (gCurrentSelection == 'free') {
+            gFreeHandParams.StartParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+        }
+        else if (gCurrentSelection == 'circle') {
+            gCircleParams.StartParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+        } 
+    }
+
+    function OnMouseDown() {
+        console.log(d3.event);
+        StartAction(d3.event);
+    }
+
+    function OnMouseMove() {
+
+        var leftKeyPressed = (d3.event.which == 1);
+        if (!leftKeyPressed)
+            return;
+        if (GetSelection() == 'line') {
+            if (!gLineParams.StartParams) {
+                StartAction(d3.event);
+                return;
+            }
+
+            var evt = d3.event;
+            d3.select('#' + gTopGroupId + "_currentItem").remove();
+
+            svg = d3.select('#' + gTopGroupId)
+                .append("line")
+                .attr("id", gTopGroupId + "_currentItem")
+                .attr("x1", gLineParams.StartParams.x)
+                .attr("y1", gLineParams.StartParams.y)
+                .attr("x2", evt.x - (evt.x - evt.offsetX))
+                .attr("y2", evt.y - (evt.y - evt.offsetY))
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                ;
+            gLineParams.SavedParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+            console.log(gLineParams.StartParams);
+            console.log(gLineParams.SavedParams);
+            //console.log(d3.event);
+        }
+        else if (GetSelection() == 'free') {
+            if (!gFreeHandParams.StartParams) {
+                StartAction(d3.event);
+                return;
+            }
+
+            var evt = d3.event;
+
+            gFreeHandParams.StopParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) }
+            
+
+            svg = d3.select('#' + gTopGroupId)
+                .append("line")
+                .attr("id", gTopGroupId + "_saveItem")
+                .attr("x1", gFreeHandParams.StartParams.x)
+                .attr("y1", gFreeHandParams.StartParams.y)
+                .attr("x2", gFreeHandParams.StopParams.x)
+                .attr("y2", gFreeHandParams.StopParams.y)
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                ;
+
+
+            gFreeHand.push(gFreeHandParams);
+            var tmp = gFreeHandParams.StopParams;
+            gFreeHandParams = {};
+            gFreeHandParams.StartParams = tmp;
+
+            //gfreeHandParams.StartParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+            //console.log(gLineParams.StartParams);
+        }
+        else if (GetSelection() == 'circle') {
+            if (!gCircleParams.StartParams) {
+                StartAction(d3.event);
+                return;
+            }
+
+            var evt = d3.event;
+
+            gCircleParams.StopParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) }
+            gCircleParams.Params = {};
+            gCircleParams.Params.cx = gCircleParams.StartParams.x +
+                (gCircleParams.StopParams.x - gCircleParams.StartParams.x) / 2;
+
+            gCircleParams.Params.cy = gCircleParams.StartParams.y +
+                (gCircleParams.StopParams.y - gCircleParams.StartParams.y) / 2;
+
+            gCircleParams.Params.rx = (gCircleParams.StopParams.x - gCircleParams.StartParams.x) / 2;
+            gCircleParams.Params.ry = (gCircleParams.StopParams.y - gCircleParams.StartParams.y) / 2;
+
+            if (gCircleParams.Params.rx < 0)
+                gCircleParams.Params.rx = 0 - gCircleParams.Params.rx;
+
+            if (gCircleParams.Params.ry < 0)
+                gCircleParams.Params.ry = 0 - gCircleParams.Params.ry;
+
+
+
+            d3.select('#' + gTopGroupId + "_currentItem").remove();
+
+            svg = d3.select('#' + gTopGroupId)
+                .append("ellipse")
+                .attr("id", gTopGroupId + "_currentItem")
+                .attr("cx", gCircleParams.Params.cx)
+                .attr("cy", gCircleParams.Params.cy)
+                .attr("rx", gCircleParams.Params.rx)
+                .attr("ry", gCircleParams.Params.ry)
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                .attr("fill", "none")
+                ;
+
+
+            //gFreeHand.push(gFreeHandParams);
+            //var tmp = gFreeHandParams.StopParams;
+            //gFreeHandParams = {};
+            //gFreeHandParams.StartParams = tmp;
+
+            //gfreeHandParams.StartParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+            //console.log(gLineParams.StartParams);
+        }
+    }
+
+    function StopAction(evt) {
+        if (GetSelection() == 'line') {
+
+            d3.select('#' + gTopGroupId + "_currentItem")
+            .attr("id", gTopGroupId + "_saveItem");
+
+            gLineParams.StopParams = { x: evt.x - (evt.x - evt.offsetX), y: evt.y - (evt.y - evt.offsetY) };
+            gLines.push(gLineParams);
+            gLineParams = {};
+
+        }
+        else if (GetSelection() == 'circle') {
+
+            d3.select('#' + gTopGroupId + "_currentItem")
+            .attr("id", gTopGroupId + "_saveItem_circle");
+
+            gCircles.push(gCircleParams);
+            gCircleParams = {};
+        }
+    }
+
+    function OnMouseUp() {
+        StopAction(d3.event);
+    }
+
+    function OnMouseClick() {
+        console.log(d3.event);
+    }
+
+    function InitializeSvg(containerId) {
+
+        var height = document.getElementById(containerId).clientHeight;
+        var width = document.getElementById(containerId).clientWidth;
+        gContainerId = containerId;
+        gCanvasId = containerId + '_canvas';
+        gTopGroupId = containerId + '_topGroup';
+        var svg = d3.select("#" + containerId).append("svg")
+            .attr("id", gCanvasId)
+            .attr("width", width )
+            .attr("height", height)
+            .on("mousedown", OnMouseDown)
+            .on("mouseup", OnMouseUp)
+            .on("mousemove", OnMouseMove)
+            .on("click", OnMouseClick)
+            .append("g")
+            .attr("id",  gTopGroupId)
+            .attr("transform", "translate(" + 1 + "," + 1 + ")")
+            ;
+
+        SetSelection('line');
+    }
+
+    function GetSelection(){
+        return gCurrentSelection;
+    }
+
+    function SetSelection(setSelection) {
+
+        gCurrentSelection = setSelection;
+
+        var svg = d3.select("#" + gCanvasId)
+            .style("cursor", "crosshair")
+            ;
+    }
+
+    function Reload() {
+        var svg = d3.select("#" + gCanvasId);
+        d3.select('#' + gTopGroupId).remove();
+
+        svg = svg.append("g")
+            .attr("id",  gTopGroupId)
+            .attr("transform", "translate(" + 1 + "," + 1 + ")")
+            ;
+
+        var lines = svg.selectAll('line')
+            .data(gLines)
+            .enter()
+            .append('line')
+
+            .attr("x1", function (d) {
+                return d.StartParams.x;
+            })
+            .attr("y1", function (d) {
+                return d.StartParams.y;
+            })
+            .attr("x2", function (d) {
+                return d.StartParams.x;
+            })
+            .attr("y2", function (d) {
+                return d.StartParams.y;
+            })            
+            ;
+
+        lines.transition()
+            .duration(1000)
+            .attr("x2", function (d) {
+                return d.StopParams.x;
+            })
+            .attr("y2", function (d) {
+                return d.StopParams.y;
+            })
+            .attr("stroke-width", 1)
+            .attr("stroke", "black")
+            ;
+
+            var circles = svg.selectAll('ellipse')
+                .data(gCircles)
+                .enter()
+                .append("ellipse")
+                .attr("id", gTopGroupId + "_savedItem")
+                 .attr("cx", function (d) {
+                     return d.Params.cx;
+                 })
+                .attr("cy", function (d) {
+                    return d.Params.cy;
+                })
+                .attr("rx", 0)
+                .attr("ry", 0)
+                ;
+
+                circles.transition()
+                .duration(1000)
+                .attr("rx", function (d) {
+                    return d.Params.rx;
+                })
+                .attr("ry", function (d) {
+                    return d.Params.ry;
+                })
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                .attr("fill", "none")
+                ;
+    }
+</script>
+
+<div id="mainDiv" style="width:800px; height:500px">
+    <div id="menuLeft" style="float:left; width:10%">
+        <a href="javascript:SetSelection('line')" >Line</a> <br />
+        <a href="javascript:SetSelection('circle')">Circle</a> <br /> 
+        <a href="javascript:SetSelection('rect')">Rectangle</a> <br /> 
+        <a href="javascript:SetSelection('ellipse')">Ellipse</a> <br /> 
+        <a href="javascript:SetSelection('free')">Free Hand</a>
+    </div>
+
+    <div id="drawAreaOuter" style="width:85%; height:100%; float:left; ">
+        <div id="menuTop" >
+            <a href="javascript:SetSelection('line')" >File</a> | 
+            <a href="javascript:Reload()">Reload</a> <br /> 
+        </div>
+        <div id="drawArea" style="width:100%; height:100%; border:1px solid gray">
+        </div>
+    </div>
+</div>
+
+
+<script>
+    InitializeSvg('drawArea');
+</script>
+
+
+</body>
+</html>
