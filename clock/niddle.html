@@ -33,7 +33,10 @@ Email : atul_pandit@yahoo.com / atul.pandit@gmail.com
         offsetX = savedX2 - (lineLength * Math.cos(angle + Math.PI/2));
         offsetY = savedY2 - (lineLength * Math.sin(angle + Math.PI/2));
 
-        line.attr("x2", offsetX)
+        line
+            .transition()
+            .duration(100)
+            .attr("x2", offsetX)
             .attr("y2", offsetY);
     }
 
