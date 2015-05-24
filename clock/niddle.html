@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+
+<script>
+    var cx; // center x of clock
+    var cy; // center y of clock
+    var gContainerId;
+    var gCanvasId;
+    var gTopGroupId;
+    var radius; // radius of clock
+    var intervalId = null;
+    var granularity = 30;
+
+    // draw line with length and angle
+    function ReDrawNiddle(niddle, angle) {
+        var svg = d3.select("#" + gTopGroupId);
+        var line = svg.select('#' + niddle);
+
+        var savedX2 = parseFloat(line.attr("x2Saved"));
+        var savedY2 = parseFloat(line.attr("y2Saved"));
+        var lineLength = parseFloat(line.attr("lineLength"));
+
+        offsetX = savedX2 - (lineLength * Math.cos(angle + Math.PI/2));
+        offsetY = savedY2 - (lineLength * Math.sin(angle + Math.PI/2));
+
+        line.attr("x2", offsetX)
+            .attr("y2", offsetY);
+    }
+
+    // as second niddle moves, it hightlights dot
+    function HighLightDot(second) {
+        var svg = d3.select("#" + gTopGroupId);
+        var dot = svg.select('#' + "second_pos_" + second);
+        var oldr = dot.attr("r");
+        var newr = parseInt(oldr) + 4;
+        dot.attr("r", newr)
+            .transition()
+            .duration(100)
+            .attr("r", oldr)
+                ;
+    }
+
+    // create dial by putting dots and number 12, 3, 6 and 9
+    function DrawDots() {
+        for (var a = 0; a < 60; ++a) {
+            var t = a * Math.PI / granularity;
+            var lineLength = radius - 10;
+            var offsetX = cx - (lineLength * Math.cos(t + Math.PI / 2));
+            var offsetY = cy - (lineLength * Math.sin(t + Math.PI / 2));
+            var svg = d3.select("#" + gTopGroupId);
+            svg.append("circle")
+                .attr("id", "second_pos_" + a)
+                .attr("cx", offsetX)
+                .attr("cy", offsetY)
+                .attr("r", function () {
+                    if (a % 5 == 0)
+                        return 2;
+                    else return 1;
+                })
+                .attr('fill', 'black');
+
+
+                var fontsize = 30; // '30px';
+                if (a == 0) {
+                    svg.append("text")
+                    .attr("x", offsetX)
+                    .attr("y", offsetY + fontsize + 5)
+                    .attr("font-size", fontsize +'px')
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "black")
+                    .text("12");
+                }
+                else if (a == 15) {
+                    svg.append("text")
+                    .attr("x", offsetX - fontsize /2 )
+                    .attr("y", offsetY + fontsize / 2)
+                    .attr("font-size", fontsize + 'px')
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "black")
+                    .text("3");
+                }
+                else if (a == 30) {
+                    svg.append("text")
+                    .attr("x", offsetX )
+                    .attr("y", offsetY - 5 )
+                    .attr("font-size", fontsize + 'px')
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "black")
+                    .text("6");
+                }
+                else if (a == 45) {
+                    svg.append("text")
+                    .attr("x", offsetX + fontsize / 2)
+                    .attr("y", offsetY + fontsize / 2)
+                    .attr("font-size", fontsize + 'px')
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "black")
+                    .text("9");
+                }
+        }
+    }
+
+    function InitializeSvg(containerId) {
+        var height = document.getElementById(containerId).clientHeight;
+        var width = document.getElementById(containerId).clientWidth;
+        gContainerId = containerId;
+        gCanvasId = containerId + '_canvas';
+        gTopGroupId = containerId + '_topGroup';
+        svg = d3.select("#" + containerId).append("svg")
+            .attr("id", gCanvasId)
+            .attr("width", width )
+            .attr("height", height)
+            .append("g")
+            .attr("id", gTopGroupId)
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            ;
+
+
+        lineLength = (height / 2) - 170;
+        cx = width/2;
+        cy = height/2;
+        var secondNiddle = svg.append("line")
+                    .attr("id", "secondNiddle")
+                    .attr("x1", cx)
+                    .attr("y1", cy)
+                    .attr("x2", cx)
+                    .attr("y2", (cy - lineLength))
+                    .attr("lineLength", lineLength)
+                    .attr("x2Saved", cx)
+                    .attr("y2Saved", (cy))
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "black")
+                    ;
+
+        lineLength = (height / 2) - 110;
+        var minuteNiddle = svg.append("line")
+                    .attr("id", "minuteNiddle")
+                    .attr("x1", cx)
+                    .attr("y1", cy)
+                    .attr("x2", cx)
+                    .attr("y2", (cy - lineLength))
+                    .attr("lineLength", lineLength)
+                    .attr("x2Saved", cx)
+                    .attr("y2Saved", (cy))
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "red")
+                    ;
+
+        lineLength = (height / 2) - 150;
+        var hourNiddle = svg.append("line")
+                    .attr("id", "hourNiddle")
+                    .attr("x1", cx)
+                    .attr("y1", cy)
+                    .attr("x2", cx)
+                    .attr("y2", (cy - lineLength))
+                    .attr("lineLength", lineLength)
+                    .attr("x2Saved", cx)
+                    .attr("y2Saved", (cy))
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "green")
+                    ;
+
+        var circle = svg.append("circle")
+                .attr("id", "centerBall")
+                .attr("cx", cx)
+                .attr("cy", cy)
+                .attr("r", 5)
+                .attr("fill", "black")
+                ;
+
+        radius = (height / 2) - 90;
+        var circle = svg.append("circle")
+                .attr("id", "outerCircle")
+                .attr("cx", cx)
+                .attr("cy", cy)
+                .attr("r", radius)
+                .attr("stroke-width", 1)
+                .attr('stroke', "black")
+                .attr('fill', 'none')
+                ;
+
+        //get current time only once . later use timer to move the clock
+        var d = new Date();
+        seconds = d.getSeconds();
+        minutes = d.getMinutes();
+        hours = d.getHours() % 12;
+        ReDrawNiddle('secondNiddle', seconds * Math.PI / granularity);
+        ReDrawNiddle('minuteNiddle', minutes * Math.PI / granularity);
+
+        var hourPos = hours * 10;
+        hourPos += (minutes * 10) / 60;
+
+        ReDrawNiddle('hourNiddle', hourPos * Math.PI / 60);
+        DrawDots();
+    }
+
+    var interval = 1000;
+
+    function StartStop() {
+        if (intervalId == null) {
+            document.getElementById('startStop').innerHTML = 'Stop';
+            intervalId = setInterval(function () {
+                ++seconds;
+                if (seconds >= 60) {
+                    seconds = 0;
+                    ++minutes;
+                    if (minutes % 5 == 0) {
+                        if (minutes >= 60) {
+                            minutes = 0;
+                            ++hours;
+                        }
+                        if (hours >= 12)
+                            hours = 0;
+                        var hourPos = hours * 10;
+                        hourPos += (minutes * 10) / 60;
+                        ReDrawNiddle('hourNiddle', hourPos * Math.PI / 60);
+                    }
+                    ReDrawNiddle('minuteNiddle', minutes * Math.PI / granularity);
+                }
+                ReDrawNiddle('secondNiddle', seconds * Math.PI / granularity);
+                HighLightDot(seconds);
+
+            }, interval);
+        }
+        else {
+            clearInterval(intervalId);
+            intervalId = null;
+            document.getElementById('startStop').innerHTML = 'Start';
+        }
+    }
+
+    function OnSpeedChange() {
+        var o = document.getElementById('speed');
+        StartStop();
+        interval = o.options[o.selectedIndex].value;
+        StartStop();
+    }
+</script>
+
+<h2>Simple Analog clock using D3Js</h2>
+
+<div id="mainDiv" style="width:800px; height:500px">
+        <div id="menuTop" >
+            <a id="startStop" href="javascript:StartStop()" >Start</a> |
+            Speed : 
+            <select id='speed' onchange="OnSpeedChange()" >
+                <option value="5000" selected="selected">Very Slow</option>
+                <option value="2000" selected="selected">Slower</option>
+                <option value="1500" selected="selected">Slow</option>
+                <option value="1000" selected="selected">Normal</option>
+                <option value="500">Fast</option>
+                <option value="100">Faster</option>
+                <option value="20">Ver Fast</option>
+            </select>
+        </div>
+        <div id="drawArea" style="width:100%; height:100%; border:1px solid gray">
+        </div>
+</div>
+
+<script>
+    InitializeSvg('drawArea');
+</script>
+
+</body>
+</html>
