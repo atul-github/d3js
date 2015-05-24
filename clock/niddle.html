@@ -44,7 +44,7 @@ Email : atul_pandit@yahoo.com / atul.pandit@gmail.com
     function HighLightDot(second) {
         var svg = d3.select("#" + gTopGroupId);
         var dot = svg.select('#' + "second_pos_" + second);
-        var oldr = dot.attr("r");
+        var oldr = dot.attr("saver");
         var newr = parseInt(oldr) + 4;
         dot.attr("r", newr)
             .transition()
@@ -66,6 +66,11 @@ Email : atul_pandit@yahoo.com / atul.pandit@gmail.com
                 .attr("cx", offsetX)
                 .attr("cy", offsetY)
                 .attr("r", function () {
+                    if (a % 5 == 0)
+                        return 2;
+                    else return 1;
+                })
+                .attr("saver", function () {
                     if (a % 5 == 0)
                         return 2;
                     else return 1;
